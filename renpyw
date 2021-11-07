@@ -1,0 +1,21 @@
+#!/bin/sh
+
+# Version of the Ren'Py SDK to be installed
+renpy_version=6.99.12.4
+
+# Python architecture to use
+if [ "$(uname)" = 'Darwin' ]; then
+    renpy_arch='darwin-x86_64'
+elif [ "$(uname | grep -o 'MINGW64')" = 'MINGW64' ]; then
+    renpy_arch='windows-i686'
+else
+    renpy_arch='linux-x86_64'
+fi
+
+if [ ! -e "lib/renpy/lib/$renpy_arch/python" ]; then
+    printf "\e[34mINFO:\e[0m Download Ren'Py SDK v%s" "$renpy_version"
+    curl -s "https://www.renpy.org/dl/$renpy_version/renpy-$renpy_version-sdk.tar.bz2" |
+        tar -s -jvxf - -C lib/renpy --strip=1 >/dev/null
+fi
+
+./lib/renpy/lib/$renpy_arch/python -O ./renpyw.py "$@"
