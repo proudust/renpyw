@@ -7,3 +7,7 @@
 !/lib/renpy/lib/**/_ssl.pyd
 !/lib/renpy/lib/**/_ssl.so
 !/lib/renpy/lib/**/ssl.pyo
+
+# build script
+renpy.7z.exe
+*.tmp
