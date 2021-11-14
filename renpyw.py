@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import hashlib
 import io
 import json
 import os
@@ -48,6 +49,11 @@ class HttpRequest(object):
                     with source_io, dist_io:
                         shutil.copyfileobj(source_io, dist_io)
 
+    def save(self, dist):
+        # type: (str) -> None
+        with open(dist, mode='wb') as f:
+            f.write(self.as_bytesio().read())
+
 
 def download_renpy_sdk():
     # type: () -> None
@@ -57,6 +63,20 @@ def download_renpy_sdk():
     if not os.path.exists("lib/renpy"):
         HttpRequest('https://www.renpy.org/dl/6.99.12.4/renpy-6.99.12.4-sdk.zip') \
             .as_zip_extract("lib/renpy")
+
+
+def apply_renpy_dialogue_patch():
+    # type: () -> None
+    """
+    Downloads and apply Proudust's Extract Dialogue patch to Ren'Py
+    """
+    md5 = ''
+    if os.path.exists('lib/renpy/renpy/translation/dialogue.py'):
+        with open('lib/renpy/renpy/translation/dialogue.py', mode='rb') as f:
+            md5 = hashlib.md5(f.read()).hexdigest()
+    if md5 != '4cbb3233fff6d5d6e9bea3a7f5a10aa3':
+        HttpRequest('https://raw.githubusercontent.com/proudust/renpy/dialogue-patch/renpy/translation/dialogue.py') \
+            .save('lib/renpy/renpy/translation/dialogue.py')
 
 
 def download_ddlc():
@@ -73,4 +93,5 @@ def download_ddlc():
 
 if __name__ == '__main__':
     download_renpy_sdk()
+    apply_renpy_dialogue_patch()
     download_ddlc()
