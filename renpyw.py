@@ -1,70 +1,27 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
+"""
+Doki Doki Literature Club Mod Development Environment setup and build script.
+"""
 import glob
 import hashlib
-import io
-import json
 import os
 import shutil
+import subprocess
 import sys
-import urllib2
-import zipfile
 
-
-class HttpRequest(object):
-    __slots__ = ['url', 'data', 'response']
-
-    def __init__(self, url, data=None):
-        self.url = url
-        self.data = data
-        self.response = None
-
-    def as_bytesio(self):
-        # type: () -> io.BytesIO
-        if self.response is None:
-            self.response = urllib2.urlopen(self.url, data=self.data)
-        return io.BytesIO(self.response.read())
-
-    def as_json(self):
-        # type: () -> dict
-        bytesio = self.as_bytesio()
-        return json.load(bytesio)
-
-    def as_zip(self):
-        # type: () -> zipfile.ZipFile
-        bytesio = self.as_bytesio()
-        return zipfile.ZipFile(bytesio, "r")
-
-    def as_zip_extract(self, dist, strip=0):
-        # type: (str, int) -> None
-        with self.as_zip() as archive:
-            for source_path in archive.namelist():
-                if not source_path.endswith('/'):
-                    stripped_path = '/'.join(source_path.split('/')[strip:])
-                    dist_path = os.path.join(dist, stripped_path)
-                    dist_dir = os.path.dirname(dist_path)
-                    if not os.path.exists(dist_dir):
-                        os.makedirs(dist_dir)
-
-                    source_io = archive.open(source_path)
-                    dist_io = open(dist_path, "wb")
-                    with source_io, dist_io:
-                        shutil.copyfileobj(source_io, dist_io)
-
-    def save(self, dist):
-        # type: (str) -> None
-        with open(dist, mode='wb') as f:
-            f.write(self.as_bytesio().read())
+from renpyw_lib import fetch
 
 
 def download_renpy_sdk():
     # type: () -> None
     """
-    If "lib/renpy" does not exist , download Ren'Py SDK.
+    If "lib/renpy" does not exist, download Ren'Py SDK.
     """
     if not os.path.exists("lib/renpy"):
-        HttpRequest('https://www.renpy.org/dl/6.99.12.4/renpy-6.99.12.4-sdk.zip') \
-            .as_zip_extract("lib/renpy", strip=1)
+        fetch('https://www.renpy.org/dl/6.99.12.4/renpy-6.99.12.4-sdk.zip') \
+            .unzip("lib/renpy", strip=1)
 
 
 def apply_renpy_dialogue_patch():
@@ -77,20 +34,20 @@ def apply_renpy_dialogue_patch():
         with open('lib/renpy/renpy/translation/dialogue.py', mode='rb') as f:
             md5 = hashlib.md5(f.read()).hexdigest()
     if md5 != '4cbb3233fff6d5d6e9bea3a7f5a10aa3':
-        HttpRequest('https://raw.githubusercontent.com/proudust/renpy/dialogue-patch/renpy/translation/dialogue.py') \
+        fetch('https://raw.githubusercontent.com/proudust/renpy/dialogue-patch/renpy/translation/dialogue.py') \
             .save('lib/renpy/renpy/translation/dialogue.py')
 
 
 def download_ddlc():
     # type: () -> None
     """
-    If "lib/ddlc" does not exist , download Ren'Py SDK.
+    If "lib/ddlc" does not exist, download Ren'Py SDK.
     """
     if not os.path.exists("lib/ddlc"):
-        url = HttpRequest('https://teamsalvato.itch.io/ddlc/file/594897', "") \
+        url = fetch('https://teamsalvato.itch.io/ddlc/file/594897', "") \
             .as_json()["url"]
-        HttpRequest(url) \
-            .as_zip_extract("lib/ddlc", strip=1)
+        fetch(url) \
+            .unzip("lib/ddlc", strip=1)
 
 
 def download_unrpyc():
@@ -99,8 +56,8 @@ def download_unrpyc():
     If "lib/unrpyc" does not exist, download unrpyc.
     """
     if not os.path.exists('lib/unrpyc'):
-        HttpRequest('https://github.com/CensoredUsername/unrpyc/archive/refs/heads/master.zip') \
-            .as_zip_extract('lib/unrpyc', strip=1)
+        fetch('https://github.com/CensoredUsername/unrpyc/archive/refs/heads/master.zip') \
+            .unzip('lib/unrpyc', strip=1)
 
 
 def download_mas(version):
@@ -111,10 +68,10 @@ def download_mas(version):
     """
     if not os.path.exists('lib/mas_' + version):
         shutil.copytree('lib/ddlc', 'lib/mas_' + version)
-        url = HttpRequest('https://api.github.com/repos/Monika-After-Story/MonikaModDev/releases/tags/' + version) \
+        url = fetch('https://api.github.com/repos/Monika-After-Story/MonikaModDev/releases/tags/' + version) \
             .as_json()['assets'][0]['browser_download_url']
-        HttpRequest(url) \
-            .as_zip_extract('lib/mas_' + version + '/game')
+        fetch(url) \
+            .unzip('lib/mas_' + version + '/game')
 
 
 def exec_unrpyc(source):
