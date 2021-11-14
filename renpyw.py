@@ -33,18 +33,18 @@ class HttpRequest(object):
         bytesio = self.as_bytesio()
         return zipfile.ZipFile(bytesio, "r")
 
-    def as_zip_extract(self, dist):
+    def as_zip_extract(self, dist, strip=0):
+        # type: (str, int) -> None
         with self.as_zip() as archive:
-            root_len = len(archive.namelist()[0].split('/')[0]) + 1
-            for name in archive.namelist():
-                if not name.endswith('/'):
-                    source_path = name[root_len:]
-                    dist_path = os.path.join(dist, source_path)
+            for source_path in archive.namelist():
+                if not source_path.endswith('/'):
+                    stripped_path = '/'.join(source_path.split('/')[strip:])
+                    dist_path = os.path.join(dist, stripped_path)
                     dist_dir = os.path.dirname(dist_path)
                     if not os.path.exists(dist_dir):
                         os.makedirs(dist_dir)
 
-                    source_io = archive.open(name)
+                    source_io = archive.open(source_path)
                     dist_io = open(dist_path, "wb")
                     with source_io, dist_io:
                         shutil.copyfileobj(source_io, dist_io)
@@ -62,7 +62,7 @@ def download_renpy_sdk():
     """
     if not os.path.exists("lib/renpy"):
         HttpRequest('https://www.renpy.org/dl/6.99.12.4/renpy-6.99.12.4-sdk.zip') \
-            .as_zip_extract("lib/renpy")
+            .as_zip_extract("lib/renpy", strip=1)
 
 
 def apply_renpy_dialogue_patch():
@@ -88,7 +88,7 @@ def download_ddlc():
         url = HttpRequest('https://teamsalvato.itch.io/ddlc/file/594897', "") \
             .as_json()["url"]
         HttpRequest(url) \
-            .as_zip_extract("lib/ddlc")
+            .as_zip_extract("lib/ddlc", strip=1)
 
 
 if __name__ == '__main__':
