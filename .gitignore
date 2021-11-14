@@ -1,6 +1,8 @@
 .idea
 
 /lib/**
+!/lib/certifi/
+!/lib/certifi/**
 !/lib/renpy/
 !/lib/renpy/lib/
 !/lib/renpy/lib/**/

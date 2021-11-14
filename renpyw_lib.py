@@ -6,6 +6,8 @@ import shutil
 import urllib2
 import zipfile
 
+os.environ["SSL_CERT_FILE"] = os.path.dirname(__file__) + "/lib/cacert.pem"
+
 
 def fetch(url, data=None):
     # type: (str, any) -> FetchResponse
