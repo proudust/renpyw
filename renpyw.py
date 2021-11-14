@@ -5,6 +5,7 @@ import io
 import json
 import os
 import shutil
+import sys
 import urllib2
 import zipfile
 
@@ -91,7 +92,39 @@ def download_ddlc():
             .as_zip_extract("lib/ddlc", strip=1)
 
 
+def download_unrpyc():
+    # type: () -> None
+    """
+    If "lib/unrpyc" does not exist, download unrpyc.
+    """
+    if not os.path.exists('lib/unrpyc'):
+        HttpRequest('https://github.com/CensoredUsername/unrpyc/archive/refs/heads/master.zip') \
+            .as_zip_extract('lib/unrpyc', strip=1)
+
+
+def download_mas(version):
+    # type: (str) -> None
+    """
+    If "lib/mas_$version" does not exist, download Monika After Story.
+    :param version: MAS version to download.
+    """
+    if not os.path.exists('lib/mas_' + version):
+        shutil.copytree('lib/ddlc', 'lib/mas_' + version)
+        url = HttpRequest('https://api.github.com/repos/Monika-After-Story/MonikaModDev/releases/tags/' + version) \
+            .as_json()['assets'][0]['browser_download_url']
+        HttpRequest(url) \
+            .as_zip_extract('lib/mas_' + version + '/game')
+
+
+def exec_unrpyc(source):
+    if not glob.glob(source):
+        subprocess.call([sys.executable, 'lib/unrpyc/unrpyc.py', '--clobber', source])
+
+
 if __name__ == '__main__':
     download_renpy_sdk()
     apply_renpy_dialogue_patch()
     download_ddlc()
+    download_unrpyc()
+    download_mas('v0.12.4')
+    exec_unrpyc("lib/mas_v0.12.4/game/*.rpyc")
